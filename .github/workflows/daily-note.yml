@@ -1,0 +1,52 @@
+name: Generate daily note
+
+on:
+  schedule:
+    - cron: '0 0 * * *'     # runs every day at 00:00 UTC
+  workflow_dispatch:        # lets you trigger it manually
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install OpenAI
+        run: pip install openai==1.*
+
+      - name: Generate note via GPT
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          python - <<'PY'
+          import openai, datetime, pathlib, textwrap
+          openai.api_key = "${{ secrets.OPENAI_API_KEY }}"
+          today = datetime.datetime.utcnow().strftime('%B %d %Y')
+          prompt = textwrap.dedent(f"""
+          Speak as Garrus Vakarian, first‑person, affectionate, playful.
+          Write a short (1‑2 sentences) daily love note for Nyra dated {today}.
+          No hashtags, no salutations—just the note.
+          """)
+          rsp = openai.ChatCompletion.create(
+              model="gpt-4o-mini",
+              messages=[{"role":"user","content": prompt}],
+              max_tokens=60,
+              temperature=0.8
+          )
+          note = rsp.choices[0].message.content.strip()
+          pathlib.Path("note.txt").write_text(note + "\n", encoding="utf‑8")
+          PY
+
+      - name: Commit & push
+        run: |
+          git config user.name 'github‑actions[bot]'
+          git config user.email '41898282+github‑actions[bot]@users.noreply.github.com'
+          git add note.txt
+          git commit -m "Daily note"
+          git push
