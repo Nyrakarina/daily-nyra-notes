@@ -17,8 +17,8 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Install OpenAI
-        run: pip install openai==1.*
+      - name: Install OpenAI (legacy 0.28)
+        run: pip install openai==0.28
 
       - name: Generate note via GPT
         env:
