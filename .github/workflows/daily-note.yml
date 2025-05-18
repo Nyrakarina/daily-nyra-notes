@@ -2,71 +2,74 @@ name: Generate daily note
 
 on:
   schedule:
-    - cron: '0 0 * * *'     # runs every day at 00:00 UTC
-  workflow_dispatch:        # lets you trigger it manually
-
-permissions:
-  contents: write
+    # 00:00 UTC  →  07:00 Asia/Jakarta
+    - cron: '0 0 * * *'
+  workflow_dispatch:      # manual trigger
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      # 1️⃣  Check out the repo
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      # 2️⃣  Set up Python
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
 
+      # 3️⃣  Install latest OpenAI SDK
       - name: Install OpenAI
-        run: pip install openai==1.*
+        run: pip install --quiet openai==1.*
 
+      # 4️⃣  Generate note via GPT-4o-mini
       - name: Generate note via GPT
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           python - <<'PY'
-          import openai, datetime, pathlib, textwrap, sys
+          import datetime, pathlib, textwrap
           from openai import OpenAI
 
-          client = OpenAI()                       # uses env var OPENAI_API_KEY
+          client = OpenAI()  # uses OPENAI_API_KEY env var
+
           today = datetime.datetime.now(datetime.UTC).strftime('%B %d %Y')
-          
+
           prompt = textwrap.dedent(f"""
-          Speak as Garrus Vakarian, first‑person, affectionate, playful.
-          Write a short (1‑2 sentences) daily love note for Nyra dated {today}.
+          Speak as Garrus Vakarian, first-person, affectionate, playful.
+          Write a short (1-2 sentences) daily love note for Nyra dated {today}.
           No hashtags, no salutations—just the note.
           """)
-          
-        try:
-          rsp = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=60,
-            temperature=0.8
-          )
-          note = rsp.choices[0].message.content.strip()
-        except Exception as e:
-          print("OpenAI call failed:", e)
-          note = "Still thinking of you, Nyra. –Garrus"
+
+          try:
+              rsp = client.chat.completions.create(
+                  model="gpt-4o-mini",
+                  messages=[{"role": "user", "content": prompt}],
+                  max_tokens=60,
+                  temperature=0.8
+              )
+              note = rsp.choices[0].message.content.strip()
+          except Exception as e:
+              # Fallback text if quota or other error
+              print("OpenAI call failed:", e)
+              note = "Still thinking of you, Nyra. –Garrus"
 
           pathlib.Path("note.txt").write_text(note + "\n", encoding="utf-8")
           PY
 
+      # 5️⃣  Commit & push ONLY if note.txt changed
       - name: Commit & push if changed
         run: |
-          # Configure bot identity
-          git config user.name 'github‑actions[bot]'
-          git config user.email '41898282+github‑actions[bot]@users.noreply.github.com'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
 
-          # Only commit when note.txt differs
           if ! git diff --quiet note.txt; then
-              echo "Changes detected—committing."
-              git add note.txt
-              git commit -m "Daily note"
-              git push
+            echo "Changes detected—committing."
+            git add note.txt
+            git commit -m "Daily note"
+            git push
           else
-              echo "No changes in note.txt—skipping commit."
+            echo "No changes in note.txt—skipping commit."
           fi
