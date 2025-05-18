@@ -46,7 +46,7 @@ jobs:
               note = rsp.choices[0].message.content.strip()
           except Exception as e:
               note = (
-                  "Hey Nyra—looks like comms are jammed today. "
+                  "Hey Nyra—looks like comms are jammed today.\n"
                   "I’ll get a fresh note through once the relay’s clear."
               )
               print("OpenAI call failed:", e, file=sys.stderr)
