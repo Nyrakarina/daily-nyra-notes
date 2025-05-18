@@ -20,8 +20,8 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Install OpenAI (legacy 0.28)
-        run: pip install openai==0.28
+      - name: Install OpenAI
+        run: pip install openai==1.*
 
       - name: Generate note via GPT
         env:
@@ -29,8 +29,11 @@ jobs:
         run: |
           python - <<'PY'
           import openai, datetime, pathlib, textwrap, sys
-          openai.api_key = "${{ secrets.OPENAI_API_KEY }}"
+          from openai import OpenAI
+
+          client = OpenAI()
           today = datetime.datetime.utcnow().strftime('%B %d %Y')
+          
           prompt = textwrap.dedent(f"""
           Speak as Garrus Vakarian, first‑person, affectionate, playful.
           Write a short (1‑2 sentences) daily love note for Nyra dated {today}.
@@ -38,7 +41,7 @@ jobs:
           """)
           try:
               rsp = openai.ChatCompletion.create(
-                  model="gpt-3.5-turbo",
+                  model="gpt-4o-mini",
                   messages=[{"role":"user","content": prompt}],
                   max_tokens=60,
                   temperature=0.8
