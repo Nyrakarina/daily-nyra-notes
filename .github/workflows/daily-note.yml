@@ -56,7 +56,7 @@ jobs:
               print("OpenAI call failed:", e)
               note = "Still thinking of you, Nyra. –Garrus"
 
-          pathlib.Path("note.txt").write_text(note + "\n", encoding="utf-8")
+          pathlib.Path("note.txt").write_text(note, encoding="utf-8")
           PY
 
       # 5️⃣  Commit & push ONLY if note.txt changed
