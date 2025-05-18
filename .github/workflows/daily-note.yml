@@ -57,10 +57,18 @@ jobs:
           pathlib.Path("note.txt").write_text(note, encoding="utf-8")
           PY
 
-      - name: Commit & push
+      - name: Commit & push if changed
         run: |
+          # Configure bot identity
           git config user.name 'github‑actions[bot]'
           git config user.email '41898282+github‑actions[bot]@users.noreply.github.com'
-          git add note.txt
-          git commit -m "Daily note"
-          git push
+
+          # Only commit when note.txt differs
+          if ! git diff --quiet note.txt; then
+              echo "Changes detected—committing."
+              git add note.txt
+              git commit -m "Daily note"
+              git push
+          else
+              echo "No changes in note.txt—skipping commit."
+          fi
