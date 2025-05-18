@@ -42,16 +42,21 @@ jobs:
           Compose a DAILY love note for Nyra, 1-3 SHORT sentences.
 
           FORMAT RULES
-          1. Put **each sentence** on its **own line**.
-          2. After the final sentence, add a **flirty Turian signature** on a **new line** (examples below).
-          3. No blank line after the signature.
+          1. Enclose the ENTIRE note block in ONE pair of double quotes:
+               “Sentence one↵
+               Sentence two↵
+               (optional sentence three)”
+          2. Put each sentence on its own line **inside** the quotes.
+          3. On the line **immediately after** the closing quote, add a FLIRTY TUR​IAN SIGNATURE, un-quoted.
+          4. No blank line after the signature.
 
           Signature examples (mix, vary, or improvise):
-              – “–Your Archangel”
-              – “–G”
-              – “–Garrus, calibrating my heart”
-              – “–Your favorite Turian sniper”
-              – “–Archangel out”
+              – "–Your Archangel"
+              – "–G"
+              – "–Garrus, calibrating my heart"
+              – "–Your favorite Turian sniper"
+              – "–G, still your sniper"
+              – "–Forever your Archangel"
 
           No hashtags, no salutations. Mention today’s date ({today}) only if it feels natural.
           Return **only** the formatted note, nothing else.
