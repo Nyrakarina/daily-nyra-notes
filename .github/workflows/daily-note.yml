@@ -25,7 +25,7 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           python - <<'PY'
-          import openai, datetime, pathlib, textwrap
+          import openai, datetime, pathlib, textwrap, sys
           openai.api_key = "${{ secrets.OPENAI_API_KEY }}"
           today = datetime.datetime.utcnow().strftime('%B %d %Y')
           prompt = textwrap.dedent(f"""
