@@ -51,7 +51,7 @@ jobs:
               )
               print("OpenAI call failed:", e, file=sys.stderr)
               
-          pathlib.Path("note.txt").write_text(note + "\n", encoding="utf‑8")
+          pathlib.Path("note.txt").write_text(note, encoding="utf-8")
           PY
 
       - name: Commit & push
