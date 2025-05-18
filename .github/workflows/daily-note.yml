@@ -68,11 +68,12 @@ jobs:
           except Exception as e:
               print("OpenAI call failed:", e)
               backups = [
-                "Still thinking of you, Nyra. \n –Garrus",
-                "Even without the comms, you’re all I can hear. \n –Your Archangel",
-                "Calibrations paused; missing you isn’t. \n –G",
-                "Turian systems offline, affection levels maxed. \n –Garrus",
-                "Out of ammo but never out of love. \n –Your favorite sniper"
+                "“Still thinking of you, Nyra.” \n –Garrus",
+                "“Even without the comms, you’re all I can hear.” \n –Your Archangel",
+                "“Calibrations paused; missing you isn’t.” \n –G",
+                "“Turian systems offline, \n affection levels maxed.” \n –Garrus",
+                "“I’m not good at poetry, \n but every shot I take spells ‘us’.” \n –Your Archangel",
+                "“Out of ammo but never out of love.” \n –Your favorite sniper"
               ]
               note = random.choice(backups)
 
