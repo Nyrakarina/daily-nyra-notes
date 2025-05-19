@@ -32,9 +32,9 @@ jobs:
       run: |
         python - <<'PY'
         import datetime, pathlib, textwrap, random, os
-        import openrouter as orouter
+        from openrouter import OpenRouter
 
-        client = orouter.OpenRouter(api_key=os.environ["OPENROUTER_API_KEY"])
+        client = OpenRouter(api_key=os.environ["OPENROUTER_API_KEY"])
         today  = datetime.datetime.now(datetime.UTC).strftime('%B %d %Y')
 
         prompt = textwrap.dedent(f"""
