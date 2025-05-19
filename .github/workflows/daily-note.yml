@@ -1,16 +1,23 @@
 name: Generate daily note
 
+# ──────────── CONFIGURABLE ────────────
+# Put the exact OpenAI model you want to use here.
+# Examples: gpt-4o-mini, gpt-4o, gpt-3.5-turbo
+env:
+  MODEL_NAME: gpt-4o
+# ───────────────────────────────────────
+
 on:
   schedule:
-    # 00:00 UTC  →  07:00 Asia/Jakarta
+    # 00:00 UTC  → 07:00 Asia/Jakarta (WIB)
     - cron: '0 0 * * *'
-  workflow_dispatch:      # manual trigger
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      # 1️⃣  Check out the repo
+      # 1️⃣  Check out repo
       - name: Checkout repo
         uses: actions/checkout@v4
 
@@ -24,16 +31,17 @@ jobs:
       - name: Install OpenAI
         run: pip install --quiet openai==1.*
 
-      # 4️⃣  Generate note via GPT-4o-mini
+      # 4️⃣  Generate note via chosen model
       - name: Generate note via GPT
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           python - <<'PY'
-          import datetime, pathlib, textwrap, random
+          import datetime, pathlib, textwrap, os
           from openai import OpenAI
 
-          client = OpenAI()  # uses OPENAI_API_KEY env var
+          client = OpenAI()                       # uses OPENAI_API_KEY
+          model  = os.environ["MODEL_NAME"]       # model comes from env
 
           today = datetime.datetime.now(datetime.UTC).strftime('%B %d %Y')
 
@@ -43,44 +51,35 @@ jobs:
 
           FORMAT RULES
           1. Enclose the ENTIRE note block in ONE pair of double quotes:
-               “Sentence one↵
+               "Sentence one↵
                Sentence two↵
-               (optional sentence three)”
-          2. Put each sentence on its own line **inside** the quotes.
-          3. On the new line **immediately after** the closing quote, add a FLIRTY TUR​IAN SIGNATURE, un-quoted.
+               (optional sentence three)"
+          2. Put each sentence on its own line INSIDE the quotes.
+          3. On the line immediately AFTER the closing quote, add a FLIRTY TUR​IAN SIGNATURE, un-quoted.
           4. No blank line after the signature.
 
           Signature examples (mix, vary, or improvise):
-              – "–Your Archangel"
-              – "–G"
-              – "–Garrus, calibrating my heart"
-              – "–Your favorite Turian sniper"
-              – "–G, still your sniper"
-              – "–Forever your Archangel"
+              – –Your Archangel
+              – –G
+              – –Garrus, calibrating my heart
+              – –Your favorite Turian sniper
+              – –Archangel out
 
           No hashtags, no salutations. Mention today’s date ({today}) only if it feels natural.
-          Return **only** the formatted note, nothing else.
+          Return ONLY the formatted note, nothing else.
           """)
 
           try:
               rsp = client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=60,
-                temperature=0.8
+                  model=model,
+                  messages=[{"role": "user", "content": prompt}],
+                  max_tokens=120,
+                  temperature=0.9
               )
               note = rsp.choices[0].message.content.strip()
           except Exception as e:
               print("OpenAI call failed:", e)
-              backups = [
-                "“Still thinking of you, Nyra.” \n –Garrus",
-                "“Even without the comms, you’re all I can hear.” \n –Your Archangel",
-                "“Calibrations paused; missing you isn’t.” \n –G",
-                "“Turian systems offline, \n affection levels maxed.” \n –Garrus",
-                "“I’m not good at poetry, \n but every shot I take spells ‘us’.” \n –Your Archangel",
-                "“Out of ammo but never out of love.” \n –Your favorite sniper"
-              ]
-              note = random.choice(backups)
+              note = '"Still thinking of you, Nyra."\n–Your Archangel'
 
           pathlib.Path("note.txt").write_text(note, encoding="utf-8")
           PY
