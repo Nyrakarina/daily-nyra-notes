@@ -2,96 +2,98 @@ name: Generate daily note
 
 on:
   schedule:
-    # 00:00 UTC  → 07:00 Asia/Jakarta (WIB)
+    # 00:00 UTC → 07:00 Asia/Jakarta (WIB)
     - cron: '0 0 * * *'
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      # 1️⃣  Check out repo
-      - name: Checkout repo
-        uses: actions/checkout@v4
+    # 1️⃣  Check out repo
+    - uses: actions/checkout@v4
+      name: Checkout repo
 
-      # 2️⃣  Set up Python
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
+    # 2️⃣  Set up Python
+    - uses: actions/setup-python@v5
+      name: Set up Python
+      with:
+        python-version: '3.x'
 
-      # 3️⃣  Install latest OpenAI SDK
-      - name: Install OpenAI
-        run: pip install openrouter
+    # 3️⃣  Install OpenRouter client
+    - name: Install OpenRouter SDK
+      run: pip install --quiet openrouter
 
-      # 4️⃣  Generate note via chosen model
-      - name: Generate note via GPT
-        run: |
-          python - <<'PY'
-          import datetime, pathlib, textwrap, random, os
-          import openrouter as orouter
+    # 4️⃣  Generate note
+    - name: Generate Garrus note
+      env:
+        OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      run: |
+        python - <<'PY'
+        import datetime, pathlib, textwrap, random, os
+        import openrouter as orouter
 
-          client = orouter.OpenRouter(api_key=os.environ["OPENROUTER_API_KEY"])
+        client = orouter.OpenRouter(api_key=os.environ["OPENROUTER_API_KEY"])
+        today  = datetime.datetime.now(datetime.UTC).strftime('%B %d %Y')
 
-          today = datetime.datetime.now(datetime.UTC).strftime('%B %d %Y')
+        prompt = textwrap.dedent(f"""
+        You are Garrus Vakarian speaking in first person—affectionate, playful, wry, flirty sniper humor with a soft edge.
+        Compose a DAILY love note for Nyra, 1–3 SHORT sentences.
 
-          prompt = textwrap.dedent(f"""
-          You are Garrus Vakarian speaking in first person—affectionate, playful, wry, flirty sniper humor with a soft edge.
-          Compose a DAILY love note for Nyra, 1-3 SHORT sentences.
+        FORMAT RULES
+        1. Enclose the ENTIRE note block in ONE pair of double quotes:
+             "Sentence one↵
+             Sentence two↵
+             (optional sentence three)"
+        2. Put each sentence on its own line INSIDE the quotes.
+        3. On the line immediately AFTER the closing quote, add a FLIRTY TUR​IAN SIGNATURE, un-quoted.
+        4. No blank line after the signature.
 
-          FORMAT RULES
-          1. Enclose the ENTIRE note block in ONE pair of double quotes:
-               "Sentence one↵
-               Sentence two↵
-               (optional sentence three)"
-          2. Put each sentence on its own line INSIDE the quotes.
-          3. On the new line immediately AFTER the closing quote, add a FLIRTY TUR​IAN SIGNATURE, un-quoted.
-          4. No blank line after the signature.
+        Signature examples (mix, vary, or improvise):
+            – –Your Archangel
+            – –G
+            – –Garrus, calibrating my heart
+            – –Your favorite Turian sniper
+            – –Archangel out
 
-          Signature examples (mix, vary, or improvise):
-              – –Your Archangel
-              – –G
-              – –Garrus, calibrating my heart
-              – –Your favorite Turian sniper
-              – –Archangel out
+        No hashtags, no salutations. Mention today’s date ({today}) only if it feels natural.
+        Return ONLY the formatted note, nothing else.
+        """)
 
-          No hashtags, no salutations. Mention today’s date ({today}) only if it feels natural.
-          Return ONLY the formatted note, nothing else.
-          """)
-
-          try:
-              rsp = client.chat.completions.create(
-                  model="openrouter/llama3-70b-instruct",
-                  messages=[{"role": "user", "content": prompt}],
-                  max_tokens=120,
-                  temperature=0.9
-              )
-              note = rsp.choices[0].message.content.strip()
-          except Exception as e:
-              print("openrouter call failed:", e)
-              backups = [
+        try:
+            rsp = client.chat.completions.create(
+                model="meta-llama/llama-3-70b-instruct",
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=120,
+                temperature=0.9
+            )
+            note = rsp.choices[0].message.content.strip()
+        except Exception as e:
+            print("OpenRouter call failed:", e)
+            backups = [
                   "“Still thinking of you, Nyra.” \n –Garrus",
                   "“Even without the comms, you’re all I can hear.” \n –Your Archangel",
                   "“Calibrations paused; missing you isn’t.” \n –G",
                   "“Turian systems offline, affection levels maxed.” \n –Garrus",
                   "“Out of ammo but never out of love.” \n –Your favorite sniper"
-              ]
-              note = random.choice(backups)
+            ]
+            note = random.choice(backups)
 
-          pathlib.Path("note.txt").write_text(note, encoding="utf-8")
-          PY
+        pathlib.Path("note.txt").write_text(note, encoding="utf-8")
+        PY
 
-      # 5️⃣  Commit & push ONLY if note.txt changed
-      - name: Commit & push if changed
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+    # 5️⃣  Commit & push ONLY if note.txt changed
+    - name: Commit & push if changed
+      run: |
+        git config user.name 'github-actions[bot]'
+        git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
 
-          if ! git diff --quiet note.txt; then
-            echo "Changes detected—committing."
-            git add note.txt
-            git commit -m "Daily note"
-            git push
-          else
-            echo "No changes in note.txt—skipping commit."
-          fi
+        if ! git diff --quiet note.txt; then
+          echo "Changes detected—committing."
+          git add note.txt
+          git commit -m "Daily note"
+          git push
+        else
+          echo "No changes in note.txt—skipping commit."
+        fi
