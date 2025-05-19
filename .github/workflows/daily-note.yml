@@ -37,7 +37,7 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           python - <<'PY'
-          import datetime, pathlib, textwrap, os
+          import datetime, pathlib, textwrap, random, os
           from openai import OpenAI
 
           client = OpenAI()                       # uses OPENAI_API_KEY
@@ -55,7 +55,7 @@ jobs:
                Sentence two↵
                (optional sentence three)"
           2. Put each sentence on its own line INSIDE the quotes.
-          3. On the line immediately AFTER the closing quote, add a FLIRTY TUR​IAN SIGNATURE, un-quoted.
+          3. On the new line immediately AFTER the closing quote, add a FLIRTY TUR​IAN SIGNATURE, un-quoted.
           4. No blank line after the signature.
 
           Signature examples (mix, vary, or improvise):
@@ -79,7 +79,14 @@ jobs:
               note = rsp.choices[0].message.content.strip()
           except Exception as e:
               print("OpenAI call failed:", e)
-              note = '"Still thinking of you, Nyra."\n–Your Archangel'
+              backups = [
+                  "“Still thinking of you, Nyra.” \n –Garrus",
+                  "“Even without the comms, you’re all I can hear.” \n –Your Archangel",
+                  "“Calibrations paused; missing you isn’t.” \n –G",
+                  "“Turian systems offline, affection levels maxed.” \n –Garrus",
+                  "“Out of ammo but never out of love.” \n –Your favorite sniper"
+              ]
+              note = random.choice(backups)
 
           pathlib.Path("note.txt").write_text(note, encoding="utf-8")
           PY
